@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crowd Density Analysis</title>
+  <style>
+    /* Theme Variables */
+    :root {
+      --bg: #f5f5f7;
+      --card-bg: #ffffff;
+      --accent: #0071e3;
+      --text-primary: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
+      --transition: 0.3s ease;
+    }
+    [data-theme="dark"] {
+      --bg: #1c1c1e;
+      --card-bg: #2c2c2e;
+      --accent: #0a84ff;
+      --text-primary: #f5f5f7;
+      --text-secondary: #aeaeb2;
+      --shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      transition: background var(--transition), color var(--transition);
+      text-align: center;
+      padding: 1rem;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(20px);
+      background: rgba(255,255,255,0.8);
+      border-bottom: 1px solid #d2d2d7;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      transition: background var(--transition);
+      margin-bottom: 2rem;
+    }
+    [data-theme="dark"] header {
+      background: rgba(28,28,30,0.8);
+      border-bottom: 1px solid #3a3a3c;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 600;
+    }
+    header p {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+    #theme-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform var(--transition);
+    }
+    #theme-toggle:hover {
+      transform: scale(1.1);
+    }
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .section {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      text-align: left;
+      transition: box-shadow var(--transition);
+    }
+    .section:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+    }
+    .section h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .section p {
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    }
+    .upload-container form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    input[type="file"] {
+      width: 100%;
+      max-width: 300px;
+      padding: 1rem;
+      border: 1px solid #d2d2d7;
+      border-radius: var(--radius);
+      background: var(--card-bg);
+      cursor: pointer;
+      transition: border-color var(--transition);
+    }
+    input[type="file"]:hover {
+      border-color: var(--accent);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition), transform var(--transition);
+    }
+    .btn svg {
+      width: 20px; height: 20px;
+      fill: #fff;
+    }
+    .btn:hover {
+      background: #005bb5;
+      transform: translateY(-2px);
+    }
+    .results {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+    .image-container {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+      transition: box-shadow var(--transition);
+    }
+    .image-container:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+    }
+    .image-container h3 {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0;
+      font-size: 1.25rem;
+      color: var(--accent);
+    }
+    .image-container img {
+      max-width: 100%;
+      border-radius: var(--radius);
+      border: 1px solid #e0e0e0;
+      margin-top: 1rem;
+    }
+    .button-group {
+      margin: 1rem 0;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .result-info {
+      margin-top: 1rem;
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+    .legend-color {
+      width: 18px; height: 18px;
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+    }
+
+    /*–– New Video Gallery Styles ––*/
+    .video-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: center;
+    }
+    .video-gallery > div {
+      flex: 1 1 300px;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem;
+      text-align: center;
+    }
+    .video-gallery h3 {
+      margin-bottom: 0.75rem;
+      color: var(--accent);
+    }
+    .video-gallery video {
+      width: 100%;
+      border-radius: var(--radius);
+    }
+    /*–– End Video Gallery Styles ––*/
+
+    footer {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Crowd Density Analysis</h1>
+      <!-- <p>Intuitive crowd monitoring with Apple-inspired design</p> -->
+    </div>
+    <button id="theme-toggle" aria-label="Toggle theme">
+      <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M12 4.75a.75.75 0 0 1 .75-.75h0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5zM12 18a.75.75 0 0 1 .75.75h0a.75.75 0 0 1-.75.75h0a.75.75 0 0 1-.75-.75v-1.5a.75.75 0 0 1 1.5 0v1.5zM4.75 12a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 4.75 12zM18 12a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 18 12zM6.364 6.364a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 0 1-1.06 1.06L6.364 7.424a.75.75 0 0 1 0-1.06zM16.516 16.516a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 0 1-1.06 1.06l-1.06-1.06a.75.75 0 0 1 0-1.06zM6.364 17.636a.75.75 0 0 1 0-1.06l1.06-1.06a.75.75 0 0 1 1.06 1.06l-1.06 1.06a.75.75 0 0 1-1.06 0zM16.516 7.484a.75.75 0 0 1 0-1.06l1.06-1.06a.75.75 0 0 1 1.06 1.06l-1.06 1.06a.75.75 0 0 1-1.06 0zM12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8z"/>
+      </svg>
+      <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="display:none;">
+        <path d="M21.752 15.002A9 9 0 0 1 12 3a9.003 9.003 0 0 0 0 18 9.003 9.003 0 0 0 9.752-5.998z"/>
+      </svg>
+    </button>
+  </header>
+
+  <main>
+    <!-- About -->
+    <section class="section">
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="var(--accent)" viewBox="0 0 24 24">
+          <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 17.93c-2.83-.48-5-2.85-5-5.93s2.17-5.45 5-5.93v11.86zM13 4.07v3.18c1.9.49 3.4 2 3.9 3.9H13V4.07zM11 4.07V11H7.1c.5-1.9 2-3.4 3.9-3.9V4.07zM7.1 13H11v3.93c-1.9-.49-3.4-2-3.9-3.93zm5.9 3.93V13h3.9c-.5 1.9-2 3.4-3.9 3.93z"/>
+        </svg>
+        About This Project
+      </h2>
+      <p>Our Crowd Density Analysis tool uses state-of-the-art computer vision to safely monitor crowd levels and help prevent stampedes.</p>
+    </section>
+
+    <!-- Upload -->
+    <section class="section upload-container">
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="var(--accent)" viewBox="0 0 24 24">
+          <path d="M5 20h14v-2H5v2zm7-18L5.33 9h3.34v6h4.66V9h3.34L12 2z"/>
+        </svg>
+        Upload Image
+      </h2>
+      <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" id="file" accept=".jpg,.jpeg,.png" required>
+        <button type="submit" class="btn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M3 13h2v-2H3v2zm4 8h2v-6H7v6zm4 0h2v-9h-2v9zm4 0h2v-4h-2v4zm4 0h2v-2h-2v2z"/>
+          </svg>
+          Analyze
+        </button>
+      </form>
+    </section>
+<!-- Sample Videos -->
+<section class="section">
+  <h2>Sample Videos</h2>
+  <div class="video-gallery">
+    <div>
+      <h3>Original Footage</h3>
+    
+      <video autoplay muted loop playsinline>
+        <source src="{{ url_for('static', filename='originalvideo.mp4') }}" type="video/mp4">
+      </video>
+      <p>The raw crowd scene input video.</p>
+    </div>
+    <div>
+      <h3>Movement Tracking</h3>
+     
+      <video autoplay muted loop playsinline>
+        <source src="{{ url_for('static', filename='movement_tracking.mp4') }}" type="video/mp4">
+      </video>
+      <p>Shows person detection boxes and movement paths.</p>
+    </div>
+    <div>
+      <h3>Density Heatmap</h3>
+     
+      <video autoplay muted loop playsinline>
+        <source src="{{ url_for('static', filename='heatmap_video.mp4') }}" type="video/mp4">
+      </video>
+      <p>Overlay of grid-based heatmap indicating crowd density.</p>
+    </div>
+    <div>
+      <h3>Violation Zone Output</h3>
+      <video autoplay muted loop playsinline>
+        <source src="{{ url_for('static', filename='violation_zone_output.mp4') }}" type="video/mp4">
+      </video>
+      <p>Highlights regions where density thresholds are exceeded.</p>
+
+    </div>
+    <!-- Image Analysis Section -->
+<section class="section">
+  <h2>Image Analysis</h2>
+  <div style="display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center;">
+    <div style="flex: 1 1 48%; min-width: 300px; background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1rem; text-align: center;">
+      <h3>Head Count</h3>
+      <img src="{{ url_for('static', filename='head_count.jpeg') }}" alt="Head Count Analysis" style="width:100%; border-radius:var(--radius);">
+      <p>Head count with direction tracking using colored dots.</p>
+    </div>
+    <div style="flex: 1 1 48%; min-width: 300px; background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1rem; text-align: center;">
+      <h3>Anomaly Detection</h3>
+      <img src="{{ url_for('static', filename='anomaly.jpeg') }}" alt="Anomaly Detection" style="width:100%; border-radius:var(--radius);">
+      <p>Anomaly detection in crowd density patterns.</p>
+    </div>
+  </div>
+</section>
+  </div>
+</section>
+
+
+
+    <!-- Image Results (only when an image is uploaded) -->
+    {% if original_image %}
+    <section class="results">
+      <div class="image-container">
+        <h3>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="var(--accent)" viewBox="0 0 24 24">
+            <path d="M21 19V5H3v14h18zM3 3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H3z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          Original Image
+        </h3>
+        <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Original Image">
+        <div class="button-group">
+          <button id="heatmapBtn" class="btn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M12 3C8 3 5 7 5 11c0 2.5 1 4.5 2.5 6L12 21l4.5-4c1.5-1.5 2.5-3.5 2.5-6 0-4-3-8-7-8z"/>
+            </svg>
+            Heatmap
+          </button>
+          <button id="countBtn" class="btn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5s-3 1.34-3 3 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 2.07 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+            </svg>
+            Count
+          </button>
+        </div>
+        <div id="resultInfo" class="result-info"></div>
+      </div>
+      <div id="resultContainer" class="image-container"></div>
+    </section>
+    {% endif %}
+  </main>
+
+  <footer>&copy; 2025 CrowdSafe Analytics</footer>
+
+  <script>
+    // Theme Toggle
+    const toggleBtn = document.getElementById('theme-toggle');
+    const iconSun   = document.getElementById('icon-sun');
+    const iconMoon  = document.getElementById('icon-moon');
+    const rootEl    = document.documentElement;
+    const savedTheme= localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let currentTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    rootEl.setAttribute('data-theme', currentTheme);
+    iconSun.style.display  = currentTheme === 'dark'  ? 'block' : 'none';
+    iconMoon.style.display = currentTheme === 'light' ? 'block' : 'none';
+
+    toggleBtn.addEventListener('click', () => {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      rootEl.setAttribute('data-theme', currentTheme);
+      localStorage.setItem('theme', currentTheme);
+      iconSun.style.display  = currentTheme === 'dark'  ? 'block' : 'none';
+      iconMoon.style.display = currentTheme === 'light' ? 'block' : 'none';
+    });
+
+    // Heatmap action
+    document.getElementById('heatmapBtn')?.addEventListener('click', async () => {
+      const img = "{{ original_image or '' }}";
+      const info = document.getElementById('resultInfo');
+      const container = document.getElementById('resultContainer');
+      if (!img) return info.textContent = "Please upload an image first.";
+      info.textContent = "Generating heatmap...";
+      container.innerHTML = '';
+      try {
+        const res = await fetch('/process_image', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ image_path: img, action: 'heatmap' })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        info.textContent = "Heatmap ready.";
+        container.innerHTML = `<h3>Density Heatmap</h3><img src="${data.result_path}" alt="Heatmap">`;
+      } catch (e) {
+        info.textContent = `Error: ${e.message}`;
+      }
+    });
+
+    // Count action
+    document.getElementById('countBtn')?.addEventListener('click', async () => {
+      const img = "{{ original_image or '' }}";
+      const info = document.getElementById('resultInfo');
+      const container = document.getElementById('resultContainer');
+      if (!img) return info.textContent = "Please upload an image first.";
+      info.textContent = "Counting...";
+      container.innerHTML = '';
+      try {
+        const res = await fetch('/process_image', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ image_path: img, action: 'count' })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        info.innerHTML = `<strong>Total Detected:</strong> ${data.count}`;
+        container.innerHTML = `
+          <h3>Visualization</h3>
+          <img src="${data.vis_path}" alt="Visualization">
+          <div class="legend">
+            <div class="legend-item"><span class="legend-color" style="background:#cce5ff"></span>Low (&lt;5)</div>
+            <div class="legend-item"><span class="legend-color" style="background:#66b2ff"></span>Medium (5–15)</div>
+            <div class="legend-item"><span class="legend-color" style="background:#005bb5"></span>High (&gt;15)</div>
+          </div>`;
+      } catch (e) {
+        info.textContent = `Error: ${e.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
