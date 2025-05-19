@@ -6,3 +6,5 @@ __pycache__/
 venv/
 static/uploads/
 static/results/
+csrnet.pth
+yolov8x.pt
