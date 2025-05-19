@@ -10,9 +10,30 @@ import torch
 from torchvision import transforms as T
 from csrnet_model import CSRNet
 from flask import redirect
+import requests
 
 
 app = Flask(__name__)
+
+def download_model(url, filename):
+    if not os.path.exists(filename):
+        print(f"Downloading {filename}...")
+        response = requests.get(url)
+        with open(filename, 'wb') as f:
+            f.write(response.content)
+        print(f"{filename} downloaded.")
+    else:
+        print(f"{filename} already exists.")
+
+# Download models
+download_model(
+    "https://drive.google.com/uc?export=download&id=1ADo_9P-CwsmuxWJIZQg1UckTikk6yx0j",
+    "csrnet.pth"
+)
+download_model(
+    "https://drive.google.com/uc?export=download&id=17vZEpK7O_1_PvkMTT6Ap5jwmc82LNiPS",
+    "yolov8x.pt"
+)
 
 # Configuration
 UPLOAD_FOLDER = 'static/uploads'
@@ -165,5 +186,3 @@ def process_image():
     
     return jsonify({'error': 'Invalid action'}), 400
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
